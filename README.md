@@ -1,1 +1,1 @@
-# Scholar_App
+# Para que o projeto seja posto em produção, temos que faer o deploy do backend, que pode estar conteinerizado, e construir o banco, buscar os endereços de ambos e alterar os arquivos para disparar contra estes endereços.
