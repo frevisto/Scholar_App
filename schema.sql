@@ -17,7 +17,9 @@ CREATE TABLE users (
 CREATE TABLE disciplinas (
   id SERIAL PRIMARY KEY,
   nome TEXT NOT NULL,
+  area TEXT,
   carga_horaria INT,
+  coordenador TEXT,
   professor_id INT REFERENCES users(id)
 );
 

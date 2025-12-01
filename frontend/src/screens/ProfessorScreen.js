@@ -19,6 +19,9 @@ import api from "../services/api";
 export default function ProfessorScreen() {
   const [disciplinas, setDisciplinas] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [editArea, setEditArea] = useState("");
+  const [editCargaHoraria, setEditCargaHoraria] = useState("");
+  const [editCoordenador, setEditCoordenador] = useState("");
 
   // modal / seleção
   const [selected, setSelected] = useState(null);
@@ -77,21 +80,42 @@ export default function ProfessorScreen() {
 
   // CRIAR disciplina (pequeno form abaixo da lista)
   const [novaDisciplina, setNovaDisciplina] = useState("");
+  const [novaArea, setNovaArea] = useState("");
+  const [novaCargaHoraria, setNovaCargaHoraria] = useState("");
+  const [novoCoordenador, setNovoCoordenador] = useState("");
+
   async function cadastrarDisciplina() {
-    if (!novaDisciplina.trim())
-      return Alert.alert("Informe o nome da disciplina");
+    if (
+      !novaDisciplina.trim() ||
+      !novaArea.trim() ||
+      !novaCargaHoraria.trim() ||
+      !novoCoordenador.trim()
+    ) {
+      return Alert.alert("Preencha todos os campos obrigatórios.");
+    }
+
     try {
       const token = await getToken();
+
       const r = await api.post(
         "/professor/disciplina",
-        { nome: novaDisciplina.trim() },
         {
-          headers: { authorization: `${token}` },
-        }
+          nome: novaDisciplina.trim(),
+          area: novaArea.trim(),
+          carga_horaria: Number(novaCargaHoraria),
+          coordenador: novoCoordenador.trim(),
+        },
+        { headers: { authorization: `${token}` } }
       );
-      console.log("cadastrarDisciplina res", r.status, r.data);
+
       Alert.alert("Sucesso", "Disciplina cadastrada");
+
+      // limpar
       setNovaDisciplina("");
+      setNovaArea("");
+      setNovaCargaHoraria("");
+      setNovoCoordenador("");
+
       carregarDisciplinas();
     } catch (err) {
       console.log("cadastrarDisciplina err", err.response?.data ?? err.message);
@@ -102,7 +126,12 @@ export default function ProfessorScreen() {
   // Quando escolher "Selecionar" abre modal preenchendo campos
   function openModalFor(item) {
     setSelected(item);
+
     setRenameValue(item.nome || "");
+    setEditArea(item.area || "");
+    setEditCargaHoraria(String(item.carga_horaria || ""));
+    setEditCoordenador(item.coordenador || "");
+
     setMatriculaValue("");
     setNotaValue("");
     setModalVisible(true);
@@ -110,20 +139,29 @@ export default function ProfessorScreen() {
 
   // RENAME (PUT)
   async function alterarDisciplina() {
-    if (!selected) return Alert.alert("Selecione uma disciplina");
-    if (!renameValue.trim()) return Alert.alert("Informe o novo nome");
+    if (
+      !renameValue.trim() ||
+      !editArea.trim() ||
+      !editCargaHoraria.trim() ||
+      !editCoordenador.trim()
+    ) {
+      return Alert.alert("Preencha todos os campos.");
+    }
 
     try {
       const token = await getToken();
-      console.log("PUT /professor/disciplina/" + selected.id, {
-        nome: renameValue,
-      });
+
       const res = await api.put(
         `/professor/disciplina/${selected.id}`,
-        { nome: renameValue.trim() },
+        {
+          nome: renameValue.trim(),
+          area: editArea.trim(),
+          carga_horaria: Number(editCargaHoraria),
+          coordenador: editCoordenador.trim(),
+        },
         { headers: { authorization: `${token}` } }
       );
-      console.log("alterarDisciplina res", res.status, res.data);
+
       Alert.alert("Alterada", "Disciplina atualizada");
       setModalVisible(false);
       setSelected(null);
@@ -314,6 +352,29 @@ export default function ProfessorScreen() {
           value={novaDisciplina}
           onChangeText={setNovaDisciplina}
         />
+
+        <TextInput
+          placeholder="Área"
+          style={styles.input}
+          value={novaArea}
+          onChangeText={setNovaArea}
+        />
+
+        <TextInput
+          placeholder="Carga horária (em horas)"
+          style={styles.input}
+          value={novaCargaHoraria}
+          onChangeText={setNovaCargaHoraria}
+          keyboardType="numeric"
+        />
+
+        <TextInput
+          placeholder="Coordenador"
+          style={styles.input}
+          value={novoCoordenador}
+          onChangeText={setNovoCoordenador}
+        />
+
         <View style={{ height: 12 }} />
         <TouchableOpacity
           style={styles.primaryBtn}
@@ -336,13 +397,36 @@ export default function ProfessorScreen() {
         <ScrollView contentContainerStyle={styles.modalContainer}>
           <Text style={styles.modalTitle}>Disciplina: {selected?.nome}</Text>
 
-          <Text style={styles.modalLabel}>Renomear</Text>
+          <Text style={styles.modalLabel}>Alterar dados da disciplina</Text>
           <TextInput
             style={styles.input}
             value={renameValue}
             onChangeText={setRenameValue}
-            placeholder="Novo nome"
+            placeholder="Nome da disciplina"
           />
+
+          <TextInput
+            style={styles.input}
+            value={editArea}
+            onChangeText={setEditArea}
+            placeholder="Área"
+          />
+
+          <TextInput
+            style={styles.input}
+            value={editCargaHoraria}
+            onChangeText={setEditCargaHoraria}
+            placeholder="Carga horária"
+            keyboardType="numeric"
+          />
+
+          <TextInput
+            style={styles.input}
+            value={editCoordenador}
+            onChangeText={setEditCoordenador}
+            placeholder="Coordenador"
+          />
+
           <View style={styles.row}>
             <TouchableOpacity
               style={styles.primaryBtn}

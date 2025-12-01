@@ -2,36 +2,71 @@ import pool from "../config/database.js";
 
 export default {
   async criarDisciplina(professorId, dados) {
-    const { nome } = dados;
+    const { nome, area, carga_horaria, coordenador } = dados;
 
-    if (!nome) throw new Error("Nome da disciplina é obrigatório");
+    if (!nome || !area || !carga_horaria || !coordenador) {
+      throw new Error("Todos os campos são obrigatórios");
+    }
 
     const query = `
-      INSERT INTO disciplinas (nome, professor_id)
-      VALUES ($1, $2)
+      INSERT INTO disciplinas (nome, area, carga_horaria, coordenador, professor_id)
+      VALUES ($1, $2, $3, $4, $5)
       RETURNING *;
     `;
 
-    const { rows } = await pool.query(query, [nome, professorId]);
+    const { rows } = await pool.query(query, [
+      nome,
+      area,
+      carga_horaria,
+      coordenador,
+      professorId,
+    ]);
+
     return rows[0];
   },
-
   async listarDisciplinas(professorId) {
-    const query = `SELECT * FROM disciplinas WHERE professor_id = $1`;
+    const query = `
+      SELECT *
+      FROM disciplinas
+      WHERE professor_id = $1
+      ORDER BY id DESC;
+    `;
     const { rows } = await pool.query(query, [professorId]);
     return rows;
   },
 
-  async atualizarDisciplina(professorId, id, dados) {
+ async atualizarDisciplina(professorId, id, dados) {
+    const { nome, area, carga_horaria, coordenador } = dados;
+
+    if (!nome || !area || !carga_horaria || !coordenador) {
+      throw new Error("Todos os campos são obrigatórios");
+    }
+
     const query = `
       UPDATE disciplinas
-      SET nome = $1
-      WHERE id = $2 AND professor_id = $3
+      SET nome = $1,
+          area = $2,
+          carga_horaria = $3,
+          coordenador = $4
+      WHERE id = $5 AND professor_id = $6
       RETURNING *;
     `;
-    const { rows } = await pool.query(query, [dados.nome, id, professorId]);
-    if (rows.length === 0)
-      throw new Error("Disciplina não encontrada ou não pertence ao professor");
+
+    const { rows } = await pool.query(query, [
+      nome,
+      area,
+      carga_horaria,
+      coordenador,
+      id,
+      professorId,
+    ]);
+
+    if (rows.length === 0) {
+      throw new Error(
+        "Disciplina não encontrada ou não pertence ao professor"
+      );
+    }
+
     return rows[0];
   },
 
@@ -82,6 +117,7 @@ export default {
 
     return rows;
   },
+
   // matricular aluno: converte matricula para id, checa disciplina e cria matrícula
   async matricularAluno({ aluno_matricula, disciplina_id }, professorId) {
     // validações básicas
